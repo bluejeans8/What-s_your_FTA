@@ -1,0 +1,68 @@
+HS Code (HS 2012),Unnamed: 0,Unnamed: 1,Product-
+,Product Description,,
+Chapter Heading Subheading,,,Specific Rule
+,,,CTH or
+80.03 8003.00,"Tin bars, rods, profiles and wire",,
+,,,RVC40
+,,,CTH or
+80.07 8007.00,Other articles of tin,,
+,,,RVC40
+,CHAPTER 81: OTHER BASE METALS;,,
+81,,,
+,CERMETS; ARTICLES THEREOF,,
+,"Tungsten (wolfram) and articles thereof,",,
+81.01,,,
+,including waste and scrap,,
+,,,CTSH or
+8101.10,- Powders,,
+,,,RVC40
+,- Other,,
+,"-- Unwrought tungsten, including bars and",,CTSH or
+8101.94,,,
+,rods obtained simply by sintering,,RVC40
+,,,CTSH or
+8101.96,-- Wire,,
+,,,RVC40
+8101.97,-- Waste and scrap,,CTSH
+,,,CTSH or
+8101.99,-- Other,,
+,,,RVC40
+,"Molybdenum and articles thereof, including",,
+81.02,,,
+,waste and scrap,,
+,,,CTSH or
+8102.10,- Powders,,
+,,,RVC40
+,- Other,,
+,"-- Unwrought molybdenum, including bars",,CTSH or
+8102.94,,,
+,and rods obtained simply by sintering,,RVC40
+,"-- Bars and rods, other than those obtained",,
+,,,CTSH or
+8102.95,"simply by sintering, profiles, plates, sheets,",,
+,,,RVC40
+,strip and foil,,
+,,,CTSH or
+8102.96,-- Wire,,
+,,,RVC40
+8102.97,-- Waste and scrap,,CTSH
+,,,CTSH or
+8102.99,-- Other,,
+,,,RVC40
+,"Tantalum and articles thereof, including",,
+81.03,,,
+,waste and scrap,,
+,"- Unwrought tantalum, including bars and",,CTSH or
+8103.20,,,
+,rods obtained simply by sintering; powders,,RVC40
+8103.30,- Waste and scrap,,CTSH
+,,,CTSH or
+8103.90,- Other,,
+,,,RVC40
+,"Magnesium and articles thereof, including",,
+81.04,,,
+,waste and scrap,,
+,- Unwrought magnesium,,
+,-- Containing at least 99.8 % by weight of,,CTSH or
+8104.11,,,
+,magnesium,,RVC40

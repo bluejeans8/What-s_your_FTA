@@ -1,0 +1,54 @@
+HS Code (HS 2012),Unnamed: 0,Unnamed: 1,Product-
+,Product Description,,
+Chapter Heading Subheading,,,Specific Rule
+,,,subheading
+,,,8504.21 or
+,,,"8504.22, or"
+,,,RVC40
+,- Other transformers,,
+,,,CTSH except
+,,,from
+,-- Having a power handling capacity not,,subheadings
+8504.31,,,
+,exceeding 1 kVA,,8504.32 to
+,,,"8504.34, or"
+,,,RVC40
+,,,CTSH except
+,,,from
+,,,subheading
+,-- Having a power handling capacity,,
+8504.32,,,"8504.31,"
+,exceeding 1 kVA but not exceeding 16 kVA,,
+,,,8504.33 or
+,,,"8504.34, or"
+,,,RVC40
+,,,CTSH except
+,,,from
+,-- Having a power handling capacity,,subheading
+8504.33,exceeding 16 kVA but not exceeding 500,,"8504.31,"
+,kVA,,8504.32 or
+,,,"8504.34, or"
+,,,RVC40
+,,,CTSH except
+,,,from
+,-- Having a power handling capacity,,subheadings
+8504.34,,,
+,exceeding 500 kVA,,8504.31 to
+,,,"8504.33, or"
+,,,RVC40
+,,,CTSH or
+8504.40,- Static converters,,
+,,,RVC40
+,,,CTSH or
+8504.50,- Other inductors,,
+,,,RVC40
+,,,CTH or
+8504.90,- Parts,,
+,,,RVC40
+,Electro-magnets; permanent magnets and,,
+,articles intended to become permanent,,
+,magnets after magnetisation; electro-,,
+85.05,"magnetic or permanent magnet chucks,",,
+,clamps and similar holding devices; electro-,,
+,"magnetic couplings, clutches and brakes;",,
+,electro-magnetic lifting heads,,
