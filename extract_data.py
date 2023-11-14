@@ -1,4 +1,3 @@
-from tabula import read_pdf
 import pandas as pd
 import os
 import pdfplumber
@@ -52,7 +51,7 @@ def extract_info(pdf_path):
                 padded_box = (box[0] - pad_size, box[1] - pad_size, box[2] + pad_size, box[3] + pad_size)
                 page_in_table = page.within_bbox(padded_box)
                 table = page_in_table.extract_table()
-                data.append(table)
+                data.append(str(table))
 
                 prev_table_box = box
             
@@ -81,11 +80,11 @@ def extract_info(pdf_path):
         os.makedirs(path)
 
 
-    with open(f"./FTA_data/{pdf_path}/info.txt", "w") as wf:
-        # wf.write(str(text) + "\n")
+    with open(f"./FTA_data/{pdf_path}/text.txt", "w", encoding='utf-8') as wf:
         for d in data:
-            wf.write(str(d) + "\n")
-                
+            if d.strip():
+                wf.write(str(d)+"\n")
+
 
 extract_info("./FTA_pdfs/RCEP.pdf")
         
