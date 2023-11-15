@@ -8,6 +8,24 @@ import re
 # width 595.44
 # height 841.68
 
+pdf_path = "./FTA_pdfs/RCEP.pdf"
+
+
+## 테이블 병합 알고리즘:
+## 두 테이블 사이에 텍스트가 껴 있는 경우 다른 테이블, 없는 경우 하나의 테이블로 가정
+def merge_tables(cur_table, data):
+    if data[-1][1] == 0: # 직전 데이터가 텍스트인 경우
+        data.append([cur_table , 1])
+        return
+    
+    elif data[-1][1] == 1: # 직전 테이터가 테이블인 경우
+        row = 0
+        while cur_table[row] == data[-1][0][row]:
+            row+=1
+        data[-1][0] += cur_table[row:]
+        return 
+    
+
 
 def extract_info(pdf_path):
 
@@ -35,6 +53,8 @@ def extract_info(pdf_path):
             prev_table_box = (0,0,595,0)
             pad_size = 1
 
+
+            ## data에 append 할 때, text 면 label 0, table 이면 label 1 추가
             for box in boxes:
                 # table 사이사이의 text 추출
                 page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-1,box[1]))
@@ -45,26 +65,32 @@ def extract_info(pdf_path):
                         continue
                     else:
                         text += str(char['text'])
-                data.append(text)
+                if text.strip():
+                    data.append([text, 0])
                 
                 # table 추출
                 padded_box = (box[0] - pad_size, box[1] - pad_size, box[2] + pad_size, box[3] + pad_size)
                 page_in_table = page.within_bbox(padded_box)
                 table = page_in_table.extract_table()
-                data.append(str(table))
+                if table:
+                    merge_tables(table, data)                
 
                 prev_table_box = box
             
             # 제일 아래 table 밑의 text 추출
             page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-1,page_height-1))
+            
 
+            # page number 및 footnote 글씨 크기 threshold로 제거
+            threshold = 10 # pdf 특성에 맞게 조정   ``
             text = ""
             for char in page_below_final_table.chars:
-                if char['size'] < 10:
+                if char['size'] < threshold:
                     continue
                 else:
                     text += str(char['text'])
-            data.append(text)
+            if text.strip():
+                data.append([text, 0])
 
 
             # text = page_below_final_table.extract_text()
@@ -80,64 +106,11 @@ def extract_info(pdf_path):
         os.makedirs(path)
 
 
-    with open(f"./FTA_data/{pdf_path}/text.txt", "w", encoding='utf-8') as wf:
+    with open(f"{path}/text.txt", "w", encoding='utf-8') as wf:
         for d in data:
-            if d.strip():
-                wf.write(str(d)+"\n")
+            text = str(d[0])
+            if text.strip():
+                wf.write(text+"\n")
 
 
-extract_info("./FTA_pdfs/RCEP.pdf")
-        
-
-
-
-
-
-
-# def extract_table(pdf_path):
-#     with pdfplumber.open(pdf_path) as pdf:
-#         # Assuming there's only one page; you may loop through pages if needed
-        
-        
-#         page = pdf.pages[57]
-#         table = page.extract_table()
-
-#     return table
-
-
-# def get_text(pdf_path):
-#     pdf=pdfplumber.open(pdf_path)
-#     pages = pdf.pages
-#     page = pages[57]
-#     print(page.find_tables()[0].bbox)
-#     # for page in pages:
-#     #     print(page.extract_text())
-
-
-# # Example usage
-# pdf_path = './FTA_pdfs/RCEP.pdf'
-# # table_data = extract_table(pdf_path)
-# # print(table_data)
-
-# get_text(pdf_path)
-
-
-# # PDF 파일 경로
-# name = "RCEP"
-# pdf_path = f"./FTA_pdfs/{name}.pdf"  # 여기에 PDF 파일 경로를 입력하세요.
-# # PDF 파일에서 표 추출
-# # 'pages' 매개변수를 통해 특정 페이지만 선택할 수 있습니다. 'all'은 모든 페이지를 의미합니다.
-# # 413-420
-# tables = read_pdf(pdf_path, pages='57-212', multiple_tables=True, stream=True)
-# # 추출된 표를 각각 CSV 파일로 저장
-# for i, table in enumerate(tables):
-#     # 생성할 CSV 파일명
-#     path = f"./FTA_data/{name}"
-
-#     if not os.path.exists(path):
-#         os.makedirs(path)
-
-#     csv_file = f"./FTA_data/{name}/extracted_table_{i}.csv"
-#     # CSV 파일로 저장
-#     table.to_csv(csv_file, index=False)
-#     print(f"Table {i} saved as {csv_file}")
+extract_info(pdf_path)

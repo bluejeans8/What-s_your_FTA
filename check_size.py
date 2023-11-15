@@ -1,13 +1,14 @@
-from tabula import read_pdf
 import pandas as pd
 import os
 import pdfplumber
 
 
-def find_line(pdf_path):
+pdf_path = "./FTA_pdfs/text_of_agreement_eng_한-뉴질랜드_FTA.pdf"
+
+# footnote 글씨 크기 check 용도
+def check_size(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
-        page = pdf.pages[219]
-        # print(page.extract_text())
+        page = pdf.pages[10]
         print(len(page.chars))
         string = ""
         for char in page.chars:
@@ -18,5 +19,5 @@ def find_line(pdf_path):
         
         print(string)
 
-find_line("./FTA_pdfs/RCEP.pdf")
+check_size(pdf_path)
 
