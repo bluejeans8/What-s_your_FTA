@@ -6,14 +6,15 @@ import re
 
 
 # PDF 정보
+# 
 # width 595.44
 # height 841.68
 
 
 ## 테이블 병합 알고리즘:
 ## 두 테이블 사이에 텍스트가 껴 있는 경우 다른 테이블, 없는 경우 하나의 테이블로 가정
-def merge_tables(cur_table, data):
-    if data[-1][1] == 0: # 직전 데이터가 텍스트인 경우
+def merge_tables(cur_table, data):        
+    if data == [] or data[-1][1] == 0: # 첫 데이터 이거나, 직전 데이터가 텍스트인 경우
         data.append([cur_table , 1])
         return
     
@@ -21,6 +22,9 @@ def merge_tables(cur_table, data):
         row = 0
         while cur_table[row] == data[-1][0][row]:
             row+=1
+            if row == len(data[-1][0]) or row == len(cur_table):
+                break 
+                
         data[-1][0] += cur_table[row:]
         return 
     
@@ -54,7 +58,6 @@ def extract_info(pdf_path):
                         bounding_box = t_location.bbox
                         boxes.append(bounding_box)    
 
-
             page_width = page.width
             page_height = page.height
             prev_table_box = (0,0,page_width - 1,0)
@@ -64,7 +67,7 @@ def extract_info(pdf_path):
             ## data에 append 할 때, text 면 label 0, table 이면 label 1 추가
             for box in boxes:
 
-                if prev_table_box[3] > box[1]: # 디버깅
+                if prev_table_box[3] >= box[1]: # 디버깅
                     # print("[debug]:", page_cnt, prev_table_box, box)
                     break
 
@@ -91,9 +94,15 @@ def extract_info(pdf_path):
             
             # 제일 아래 table 밑의 text 추출, page_number 제거
             if prev_table_box[3] < 750:
-                page_number_height = 80
-                page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-1,page_height-page_number_height))
-            
+                if page_width < page_height: # 가로로 긴 pdf
+                    page_number_height = 80
+                    page_number_width = 0
+                else: # 세로로 긴 pdf
+                    page_number_height = 0
+                    page_number_width = 20
+                
+                page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-page_number_width,page_height-page_number_height))
+
 
                 # footnote 글씨 크기 threshold로 제거
                 size_threshold = 10 # pdf 특성에 맞게 조정   ``
@@ -127,10 +136,15 @@ def extract_info(pdf_path):
                 wf.write(text+"\n")
 
 
-# paths = glob.glob("/home/jsk0821/Documents/FTA/FTA_pdfs/*")
+# paths = glob.glob("C:/Users/User/What-s_your_FTA/FTA_pdfs/*")
 
-# for pdf_path in paths:
-#     print(pdf_path)
-#     extract_info(pdf_path)
+paths = ['C:/Users/User/What-s_your_FTA/FTA_pdfs/RCEP.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한,EU FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한,중 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-ASEAN_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-EFTA_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-뉴질랜드_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-베트남_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-싱가포르_DPA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-싱가포르_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-인도_CEPA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-칠레_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-캐나다_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-콜롬비아_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-터키_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-페루_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-호주_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한미FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-영 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-이스라엘 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-인도네시아 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-캄보디아 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-튀르키예 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-중미 FTA-1.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-중미 FTA-2.pdf']
 
-extract_info("/home/jsk0821/Documents/FTA/FTA_pdfs/한-중미 FTA.pdf")
+
+
+for pdf_path in paths[22:]:
+    print(pdf_path)
+    extract_info(pdf_path)
+
+
+# extract_info("C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-인도_CEPA.pdf")
