@@ -1,14 +1,13 @@
 import pandas as pd
 import os
 import pdfplumber
+import glob
 import re
 
 
 # PDF 정보
 # width 595.44
 # height 841.68
-
-pdf_path = "./FTA_pdfs/RCEP.pdf"
 
 
 ## 테이블 병합 알고리즘:
@@ -37,25 +36,38 @@ def extract_info(pdf_path):
         page_cnt = 0
         for page in pdf.pages:
             page_cnt += 1
-            if page_cnt%100 == 0:
+            if page_cnt%200 == 0:
                 print(page_cnt)
-            
+
             # table이 포함된 boundary boxes 생성
             boxes = []
-            t_locations = page.find_tables()
-            for t_location in t_locations:
-                bounding_box = t_location.bbox
-                boxes.append(bounding_box)    
+            big_table = page.find_table()
+
+            if big_table != None:
+                bt_bounding_box = big_table.bbox
+                if bt_bounding_box[3] - bt_bounding_box[1] > 600:
+                    boxes.append(bt_bounding_box)
+                
+                else:
+                    t_locations = page.find_tables()
+                    for t_location in t_locations:
+                        bounding_box = t_location.bbox
+                        boxes.append(bounding_box)    
 
 
-            page_width = 595.44
-            page_height = 841.68
-            prev_table_box = (0,0,595,0)
+            page_width = page.width
+            page_height = page.height
+            prev_table_box = (0,0,page_width - 1,0)
             pad_size = 1
 
 
             ## data에 append 할 때, text 면 label 0, table 이면 label 1 추가
             for box in boxes:
+
+                if prev_table_box[3] > box[1]: # 디버깅
+                    # print("[debug]:", page_cnt, prev_table_box, box)
+                    break
+
                 # table 사이사이의 text 추출
                 page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-1,box[1]))
                 # text = page_upward_table.extract_text()
@@ -77,20 +89,22 @@ def extract_info(pdf_path):
 
                 prev_table_box = box
             
-            # 제일 아래 table 밑의 text 추출
-            page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-1,page_height-1))
+            # 제일 아래 table 밑의 text 추출, page_number 제거
+            if prev_table_box[3] < 750:
+                page_number_height = 80
+                page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-1,page_height-page_number_height))
             
 
-            # page number 및 footnote 글씨 크기 threshold로 제거
-            threshold = 10 # pdf 특성에 맞게 조정   ``
-            text = ""
-            for char in page_below_final_table.chars:
-                if char['size'] < threshold:
-                    continue
-                else:
-                    text += str(char['text'])
-            if text.strip():
-                data.append([text, 0])
+                # footnote 글씨 크기 threshold로 제거
+                size_threshold = 10 # pdf 특성에 맞게 조정   ``
+                text = ""
+                for char in page_below_final_table.chars:
+                    if char['size'] < size_threshold:
+                        continue
+                    else:
+                        text += str(char['text'])
+                if text.strip():
+                    data.append([text, 0])
 
 
             # text = page_below_final_table.extract_text()
@@ -100,8 +114,8 @@ def extract_info(pdf_path):
             # if text != "":
             #     data.append(text)
 
-            
-    path = f"./FTA_data/{pdf_path}"
+    folder_name = pdf_path.split("/")[-1].split(".")[-2]
+    path = f"./FTA_data/{folder_name}"
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -113,4 +127,10 @@ def extract_info(pdf_path):
                 wf.write(text+"\n")
 
 
-extract_info(pdf_path)
+# paths = glob.glob("/home/jsk0821/Documents/FTA/FTA_pdfs/*")
+
+# for pdf_path in paths:
+#     print(pdf_path)
+#     extract_info(pdf_path)
+
+extract_info("/home/jsk0821/Documents/FTA/FTA_pdfs/한-중미 FTA.pdf")
