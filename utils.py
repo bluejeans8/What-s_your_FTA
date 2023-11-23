@@ -1,9 +1,6 @@
-import pandas as pd
 import os
-import pdfplumber
 import glob
-import re
-
+import pdfplumber
 
 # PDF 정보
 # 
@@ -30,7 +27,7 @@ def merge_tables(cur_table, data):
     
 
 
-def extract_info(pdf_path):
+def extract_data_kor(pdf_path):
 
     table, text = "", ""
 
@@ -114,37 +111,23 @@ def extract_info(pdf_path):
                         text += str(char['text'])
                 if text.strip():
                     data.append([text, 0])
-
-
-            # text = page_below_final_table.extract_text()
-            
-            # # page number 제거
-            # text = re.sub(r"[0-9]+[A-Z]*-[0-9]+","",text)[:-1]
-            # if text != "":
-            #     data.append(text)
-
-    folder_name = pdf_path.split("/")[-1].split(".")[-2]
-    path = f"./FTA_data/{folder_name}"
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-
-    with open(f"{path}/text.txt", "w", encoding='utf-8') as wf:
-        for d in data:
-            text = str(d[0])
-            if text.strip():
-                wf.write(text+"\n")
-
-
-# paths = glob.glob("C:/Users/User/What-s_your_FTA/FTA_pdfs/*")
-
-paths = ['C:/Users/User/What-s_your_FTA/FTA_pdfs/RCEP.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한,EU FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한,중 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-ASEAN_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-EFTA_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-뉴질랜드_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-베트남_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-싱가포르_DPA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-싱가포르_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-인도_CEPA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-칠레_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-캐나다_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-콜롬비아_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-터키_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-페루_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-호주_FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한미FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-영 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-이스라엘 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-인도네시아 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-캄보디아 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-튀르키예 FTA.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-중미 FTA-1.pdf', 'C:/Users/User/What-s_your_FTA/FTA_pdfs/한-중미 FTA-2.pdf']
+        
+    return data
 
 
 
-for pdf_path in paths[22:]:
-    print(pdf_path)
-    extract_info(pdf_path)
 
+def extract_data_EU(pdf_path):
 
-# extract_info("C:/Users/User/What-s_your_FTA/FTA_pdfs/text_of_agreement_eng_한-인도_CEPA.pdf")
+    data = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[70]
+        data.append(page.extract_tables())
+        for char in page.chars:
+            # if char['size'] < 8:
+            #     print(char['text'])
+            print(char['size'], end=" ")
+
+    with open("./EU.txt","w") as wf:
+        wf.write(str(data) + "\n")
