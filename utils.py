@@ -53,7 +53,9 @@ def append_text(page, data, code):
             else:
                 text += str(char['text'])
     else: # 유
-        text += page.extract_text()
+        words = page.extract_words(x_tolerance=1)
+        for word in words:
+            text += word['text'] + ' '
         
     if text.strip():
         data.append([text, 0])
@@ -116,13 +118,13 @@ def find_open_table(page):
     # table finding
     table = page.find_table(table_settings=table_config)
 
-    ##### Debug visually.
+    #### Debug visually.
     # image = page.to_image(resolution=200)
 
     # image.reset().debug_tablefinder(table_config)
 
     # image.save("image.png", format="PNG")
-    #####
+    ####
 
     return table
 
@@ -142,6 +144,7 @@ def extract_data(pdf_path, code):
             if page_cnt%200 == 0:
                 print(page_cnt)
 
+
             # table이 포함된 boundary boxes 생성
             boxes = []
             big_table = page.find_table()
@@ -159,11 +162,12 @@ def extract_data(pdf_path, code):
                 open_table = find_open_table(page)
                 if open_table != None: # 열린 테이블이 존재하는 경우
                     ot_bounding_box = open_table.bbox
-                    boxes.append(ot_bounding_box)    
+                    boxes.append(ot_bounding_box)
 
             page_width = page.width
             page_height = page.height
-            prev_table_box = (0,0,page_width - 1,0)
+            page_header_height = 70
+            prev_table_box = (0, page_header_height, page_width - 1, page_header_height)
             pad_size = 0.01
 
 
@@ -173,6 +177,7 @@ def extract_data(pdf_path, code):
                 if prev_table_box[3] >= box[1]: # 디버깅
                     # print("[debug]:", page_cnt, prev_table_box, box)
                     break
+                
 
                 # table 사이사이의 text 추출
                 page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-1,box[1]))
@@ -189,6 +194,7 @@ def extract_data(pdf_path, code):
 
                 prev_table_box = box
             
+
             # 제일 아래 table 밑의 text 추출, page_number 제거
             if prev_table_box[3] < 750:
                 if page_width < page_height: # 가로로 긴 pdf

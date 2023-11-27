@@ -2,7 +2,7 @@ import pdfplumber
 
 # pdf_path = ".\\FTA_pdfs\\EU\\EU_agreement_Antigua and Barbuda (CARIFORUM)_20110225.pdf"
 
-pdf_path = ".\\FTA_pdfs\\EU\\EU_agreement_Albania_2009.pdf"
+pdf_path = "/home/jsk0821/Documents/FTA/FTA_pdfs/EU/EU_agreement_Madagascar (ESA)_20120424.pdf"
 
 
 def extract_table():
@@ -10,11 +10,10 @@ def extract_table():
 
     with pdfplumber.open(pdf_path) as pdf:
 
-        page = pdf.pages[63]
+        page = pdf.pages[165]
         
-        page_update = page.within_bbox((0,70,page.width,page.height))
-
-
+        page_update = page.within_bbox((0,0,page.width,page.height))
+        
         lines = page_update.edges
         vertical = []
         horizontal = []
@@ -61,11 +60,11 @@ def extract_table():
         image.save("image.png", format="PNG")
         #####
 
-        # table 첫번째 column 빈칸채우기
-        for element in table:
-            if element[0] == '':
-                element[0] = prev_element[0]
-            prev_element = element
+        # # table 첫번째 column 빈칸채우기
+        # for element in table:
+        #     if element[0] == '':
+        #         element[0] = prev_element[0]
+        #     prev_element = element
 
         print(table)
 

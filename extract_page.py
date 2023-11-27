@@ -1,7 +1,10 @@
 import pdfplumber
 
-pdf_path = ".\\FTA_pdfs\\EU\\EU_agreement_Andorra_2003_1.pdf"
+pdf_path = "/home/jsk0821/Documents/FTA/FTA_pdfs/EU/EU_agreement_Algeria_20051010.pdf"
 
 with pdfplumber.open(pdf_path) as pdf:
-    for page in pdf.pages:
-        print(page.extract_text())
+    with open("./example.txt", "w") as wf:
+        for page in pdf.pages:
+            wf.write(page.extract_text(x_tolerance=1)
+)
+
