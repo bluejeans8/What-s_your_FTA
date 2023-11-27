@@ -1,20 +1,31 @@
 import os
 import glob
 import pdfplumber
+import json
 
 # PDF 정보
 # 
 # width 595.44
 # height 841.68
 
+# table 첫번째 column 빈칸채우기
+def column_fill(table):
+    prev_element = table[0]
+    for element in table:
+        if element[0] == '':
+            element[0] = prev_element[0]
+        prev_element = element        
 
-## 테이블 병합 알고리즘:
-## 두 테이블 사이에 텍스트가 껴 있는 경우 다른 테이블, 없는 경우 하나의 테이블로 가정
-def merge_tables(cur_table, data):        
+
+# table을 data에 더해주기
+def append_table(cur_table, data):        
     if data == [] or data[-1][1] == 0: # 첫 데이터 이거나, 직전 데이터가 텍스트인 경우
+        column_fill(cur_table)
         data.append([cur_table , 1])
         return
     
+    ## 테이블 병합 알고리즘:
+    ## 두 테이블 사이에 텍스트가 껴 있는 경우 다른 테이블, 없는 경우 하나의 테이블로 가정
     elif data[-1][1] == 1: # 직전 테이터가 테이블인 경우
         row = 0
         while cur_table[row] == data[-1][0][row]:
@@ -23,11 +34,102 @@ def merge_tables(cur_table, data):
                 break 
                 
         data[-1][0] += cur_table[row:]
-        return 
+        column_fill(data[-1][0])
+        return
+
+# text를 data에 더해주기
+def append_text(page, data, code):
+
+    if code == '0': # 한
+        size_threshold = 10
+    elif code == '2': # 미
+        size_threshold = 8 
+
+    text = ""
+    if code == '0' or code == '2': ## 한 or 미
+        for char in page.chars:
+            if char['size'] < size_threshold:
+                continue
+            else:
+                text += str(char['text'])
+    else: # 유
+        text += page.extract_text()
+        
+    if text.strip():
+        data.append([text, 0])
+
+
+# footnote 글씨 크기 check 용도
+def check_size(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[10]
+        print(len(page.chars))
+        string = ""
+        for char in page.chars:
+            if char['size'] < 10:
+                continue
+            else:
+                string += str(char['text'])
+        
+        print(string)
+
+
+# 열린 테이블(양 side가 막히지 않은 테이블) 검색
+def find_open_table(page):
+        
+    page_update = page.within_bbox((0,70,page.width,page.height))
+
+    lines = page_update.edges
+    vertical = []
+    horizontal = []
+    v_threshold = 1
+    h_threshold = 20
+    for line in lines:
+        if line['orientation'] == 'v':
+            if line['bottom'] - line['top'] > v_threshold:
+                vertical.append(line)
+        elif line['orientation'] == 'h':
+            if line['x1'] - line['x0'] > h_threshold:
+                horizontal.append(line)
+
+    if horizontal == [] or vertical == []:
+        return None
     
 
+    table_config = {        
+        "vertical_strategy": "explicit",
+        "horizontal_strategy": "explicit",
+        "explicit_vertical_lines": (
+            # Using both the left- and right-hand edges of each line
+            [ x["x0"] for x in horizontal ]+
+            [ x["x1"] for x in horizontal ]
+        ),
+        "explicit_horizontal_lines": (
+            # Using both the top- and bottom-hand edges of each line
+            [x["top"] for x in vertical] +
+            [x["bottom"] for x in vertical]
+        ),
+        "join_tolerance": 50,
+        "snap_tolerance": 5,
+    }
 
-def extract_data_kor(pdf_path):
+    # table finding
+    table = page.find_table(table_settings=table_config)
+
+    ##### Debug visually.
+    # image = page.to_image(resolution=200)
+
+    # image.reset().debug_tablefinder(table_config)
+
+    # image.save("image.png", format="PNG")
+    #####
+
+    return table
+
+    
+
+# code: korea 0, EU 1, US 2
+def extract_data(pdf_path, code):
 
     table, text = "", ""
 
@@ -44,21 +146,25 @@ def extract_data_kor(pdf_path):
             boxes = []
             big_table = page.find_table()
 
-            if big_table != None:
+            if big_table != None: # 완전히 닫힌 table이 존재하는 경우
                 bt_bounding_box = big_table.bbox
-                if bt_bounding_box[3] - bt_bounding_box[1] > 600:
+                if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
                     boxes.append(bt_bounding_box)
-                
-                else:
+                else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우
                     t_locations = page.find_tables()
                     for t_location in t_locations:
                         bounding_box = t_location.bbox
-                        boxes.append(bounding_box)    
+                        boxes.append(bounding_box)
+            else: # 완전히 닫힌 table이 존재하지 않는 경우
+                open_table = find_open_table(page)
+                if open_table != None: # 열린 테이블이 존재하는 경우
+                    ot_bounding_box = open_table.bbox
+                    boxes.append(ot_bounding_box)    
 
             page_width = page.width
             page_height = page.height
             prev_table_box = (0,0,page_width - 1,0)
-            pad_size = 1
+            pad_size = 0.01
 
 
             ## data에 append 할 때, text 면 label 0, table 이면 label 1 추가
@@ -70,22 +176,16 @@ def extract_data_kor(pdf_path):
 
                 # table 사이사이의 text 추출
                 page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-1,box[1]))
-                # text = page_upward_table.extract_text()
-                text = ""
-                for char in page_upward_table.chars:
-                    if char['size'] < 10:
-                        continue
-                    else:
-                        text += str(char['text'])
-                if text.strip():
-                    data.append([text, 0])
+                append_text(page_upward_table, data, code)
+
                 
                 # table 추출
                 padded_box = (box[0] - pad_size, box[1] - pad_size, box[2] + pad_size, box[3] + pad_size)
                 page_in_table = page.within_bbox(padded_box)
                 table = page_in_table.extract_table()
+
                 if table:
-                    merge_tables(table, data)                
+                    append_table(table, data)                
 
                 prev_table_box = box
             
@@ -93,41 +193,23 @@ def extract_data_kor(pdf_path):
             if prev_table_box[3] < 750:
                 if page_width < page_height: # 가로로 긴 pdf
                     page_number_height = 80
+                    if page_height - page_number_height < prev_table_box[3]: # US에서 특수한 경우 예외처리
+                        page_number_height = 30
                     page_number_width = 0
                 else: # 세로로 긴 pdf
                     page_number_height = 0
                     page_number_width = 20
                 
                 page_below_final_table = page.within_bbox((0,prev_table_box[3],page_width-page_number_width,page_height-page_number_height))
-
-
-                # footnote 글씨 크기 threshold로 제거
-                size_threshold = 10 # pdf 특성에 맞게 조정   ``
-                text = ""
-                for char in page_below_final_table.chars:
-                    if char['size'] < size_threshold:
-                        continue
-                    else:
-                        text += str(char['text'])
-                if text.strip():
-                    data.append([text, 0])
+                
+                append_text(page_below_final_table, data, code)
         
     return data
 
 
-
-
-def extract_data_EU(pdf_path):
-
-    data = []
-
-    with pdfplumber.open(pdf_path) as pdf:
-        page = pdf.pages[70]
-        data.append(page.extract_tables())
-        for char in page.chars:
-            # if char['size'] < 8:
-            #     print(char['text'])
-            print(char['size'], end=" ")
-
-    with open("./EU.txt","w") as wf:
-        wf.write(str(data) + "\n")
+def table_to_latex(data_path):
+    with open(data_path,"r") as rf:
+        for line in rf.readlines():
+            if line.startswith('[['):
+                line.replace("[['","").replace("']]","").replace("],[","&")
+    return
