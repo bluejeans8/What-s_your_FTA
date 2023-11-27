@@ -17,6 +17,7 @@ def column_fill(table):
         prev_element = element        
 
 
+
 # table을 data에 더해주기
 def append_table(cur_table, data):        
     if data == [] or data[-1][1] == 0: # 첫 데이터 이거나, 직전 데이터가 텍스트인 경우
@@ -36,6 +37,8 @@ def append_table(cur_table, data):
         data[-1][0] += cur_table[row:]
         column_fill(data[-1][0])
         return
+
+
 
 # text를 data에 더해주기
 def append_text(page, data, code):
@@ -61,6 +64,7 @@ def append_text(page, data, code):
         data.append([text, 0])
 
 
+
 # footnote 글씨 크기 check 용도
 def check_size(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
@@ -74,6 +78,7 @@ def check_size(pdf_path):
                 string += str(char['text'])
         
         print(string)
+
 
 
 # 열린 테이블(양 side가 막히지 않은 테이블) 검색
@@ -117,6 +122,7 @@ def find_open_table(page):
 
     # table finding
     table = page.find_table(table_settings=table_config)
+    table_content = page.extract_table(table_settings=table_config)
 
     #### Debug visually.
     # image = page.to_image(resolution=200)
@@ -126,14 +132,50 @@ def find_open_table(page):
     # image.save("image.png", format="PNG")
     ####
 
-    return table
+    return table, table_content
 
+
+
+def find_all_tables(page):
+
+    # table이 포함된 boundary boxes 생성
+    tables = []
+    big_table = page.find_table()
+    big_table_content = page.extract_table()
+
+    if big_table != None: # 완전히 닫힌 table이 존재하는 경우
+        bt_bounding_box = big_table.bbox
+        if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
+            tables.append((bt_bounding_box, big_table_content))
+        else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우
+            t_locations = page.find_tables()
+            tables_content = page.extract_tables()
+            for t_location, table_content in zip(t_locations, tables_content):
+                bounding_box = t_location.bbox
+                tables.append((bounding_box, table_content))
+    else: # 완전히 닫힌 table이 존재하지 않는 경우
+        output = find_open_table(page)
+        if output != None: # 열린 테이블이 존재하는 경우
+            open_table, open_table_content = output
+            ot_bounding_box = open_table.bbox
+            tables.append((ot_bounding_box, open_table_content))
+
+    return tables
+
+
+
+
+def table_to_latex(data_path):
+    with open(data_path,"r") as rf:
+        for line in rf.readlines():
+            if line.startswith('[['):
+                line.replace("[['","").replace("']]","").replace("],[","&")
+    return
     
+
 
 # code: korea 0, EU 1, US 2
 def extract_data(pdf_path, code):
-
-    table, text = "", ""
 
     data = []
 
@@ -144,53 +186,28 @@ def extract_data(pdf_path, code):
             if page_cnt%200 == 0:
                 print(page_cnt)
 
-
-            # table이 포함된 boundary boxes 생성
-            boxes = []
-            big_table = page.find_table()
-
-            if big_table != None: # 완전히 닫힌 table이 존재하는 경우
-                bt_bounding_box = big_table.bbox
-                if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
-                    boxes.append(bt_bounding_box)
-                else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우
-                    t_locations = page.find_tables()
-                    for t_location in t_locations:
-                        bounding_box = t_location.bbox
-                        boxes.append(bounding_box)
-            else: # 완전히 닫힌 table이 존재하지 않는 경우
-                open_table = find_open_table(page)
-                if open_table != None: # 열린 테이블이 존재하는 경우
-                    ot_bounding_box = open_table.bbox
-                    boxes.append(ot_bounding_box)
+            tables = find_all_tables(page)
 
             page_width = page.width
             page_height = page.height
             page_header_height = 70
             prev_table_box = (0, page_header_height, page_width - 1, page_header_height)
-            pad_size = 0.01
+            pad_size = 1
 
 
             ## data에 append 할 때, text 면 label 0, table 이면 label 1 추가
-            for box in boxes:
+            for box, table_content in tables:
 
                 if prev_table_box[3] >= box[1]: # 디버깅
                     # print("[debug]:", page_cnt, prev_table_box, box)
                     break
                 
-
                 # table 사이사이의 text 추출
-                page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-1,box[1]))
+                page_upward_table = page.within_bbox((0,prev_table_box[3],page_width-pad_size,box[1]))
                 append_text(page_upward_table, data, code)
 
-                
-                # table 추출
-                padded_box = (box[0] - pad_size, box[1] - pad_size, box[2] + pad_size, box[3] + pad_size)
-                page_in_table = page.within_bbox(padded_box)
-                table = page_in_table.extract_table()
-
-                if table:
-                    append_table(table, data)                
+                if table_content:
+                    append_table(table_content, data)                
 
                 prev_table_box = box
             
@@ -211,11 +228,3 @@ def extract_data(pdf_path, code):
                 append_text(page_below_final_table, data, code)
         
     return data
-
-
-def table_to_latex(data_path):
-    with open(data_path,"r") as rf:
-        for line in rf.readlines():
-            if line.startswith('[['):
-                line.replace("[['","").replace("']]","").replace("],[","&")
-    return
