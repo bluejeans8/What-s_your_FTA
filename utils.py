@@ -1,7 +1,5 @@
 import os
-import glob
 import pdfplumber
-import json
 
 # PDF 정보
 # 
@@ -124,6 +122,9 @@ def find_open_table(page):
     table = page.find_table(table_settings=table_config)
     table_content = page.extract_table(table_settings=table_config)
 
+    if table == None or table_content == None:
+        return None
+
     #### Debug visually.
     # image = page.to_image(resolution=200)
 
@@ -145,14 +146,33 @@ def find_all_tables(page):
 
     if big_table != None: # 완전히 닫힌 table이 존재하는 경우
         bt_bounding_box = big_table.bbox
-        if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
-            tables.append((bt_bounding_box, big_table_content))
-        else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우
-            t_locations = page.find_tables()
-            tables_content = page.extract_tables()
-            for t_location, table_content in zip(t_locations, tables_content):
-                bounding_box = t_location.bbox
-                tables.append((bounding_box, table_content))
+        
+        output = find_open_table(page)
+        if output != None:
+            open_table, open_table_content = output
+            ot_bounding_box = open_table.bbox
+
+            if bt_bounding_box[2] - bt_bounding_box[0] < ot_bounding_box[2] - ot_bounding_box[0]: # big_table이 open_table의 부분집합을 추출한 경우 (오류)
+                    tables.append((ot_bounding_box, open_table_content))
+            else: # 정상적으로 table을 추출한 경우
+                if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
+                    tables.append((bt_bounding_box, big_table_content))
+                else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우                    
+                    t_locations = page.find_tables()
+                    tables_content = page.extract_tables()
+                    for t_location, table_content in zip(t_locations, tables_content):
+                        bounding_box = t_location.bbox
+                        tables.append((bounding_box, table_content))
+        else:
+            if bt_bounding_box[3] - bt_bounding_box[1] > 600: # 페이지에 큰 표가 1개 존재하는 경우
+                tables.append((bt_bounding_box, big_table_content))
+            else: # 여러 표가 존재 or 작은 표가 1개 존재하는 경우                    
+                t_locations = page.find_tables()
+                tables_content = page.extract_tables()
+                for t_location, table_content in zip(t_locations, tables_content):
+                    bounding_box = t_location.bbox
+                    tables.append((bounding_box, table_content))
+                    
     else: # 완전히 닫힌 table이 존재하지 않는 경우
         output = find_open_table(page)
         if output != None: # 열린 테이블이 존재하는 경우
@@ -164,13 +184,29 @@ def find_all_tables(page):
 
 
 
+def to_latex(table_content):
+    length = len(table_content[0])
+    text = ""
+    text+="\\begin{table}[t]\n"
+    text+="\\begin{center}\n"
+    text+="\\begin{tabular}{ "
+    text+= ("c " * length + "}\n")
+    for row in table_content:
+        length = len(row)
+        for i in range(length):
+            if row[i]==None:
+                row[i] = ''
+            row[i] = row[i].replace('\n', ' ')
+            text+= row[i]
+            if i < length-1:
+                text+=" & "
+        text+= " \\\\\n"
+    text+= "\\end{tabular}\n"
+    text+= "\\end{center}\n"
+    text+= "\\end{table}\n"
+    
+    return text
 
-def table_to_latex(data_path):
-    with open(data_path,"r") as rf:
-        for line in rf.readlines():
-            if line.startswith('[['):
-                line.replace("[['","").replace("']]","").replace("],[","&")
-    return
     
 
 

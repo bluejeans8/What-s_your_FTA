@@ -25,6 +25,10 @@ if not os.path.exists(path):
 
 with open(f"{path}/text.txt", "w", encoding='utf-8') as wf:
     for d in data:
-        text = str(d[0])
-        if text.strip():
+        if isinstance(d[0], list):
+            text = utils.to_latex(d[0])
             wf.write(text+"\n")
+        else:
+            text = str(d[0])
+            if text.strip():
+                wf.write(text+"\n")

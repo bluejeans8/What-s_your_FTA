@@ -11,9 +11,9 @@
 
 
 
-python extract_pdf.py "./FTA_pdfs/EU/EU_agreement_Albania_2009.pdf" 1
-# python extract_pdf.py "./FTA_pdfs/EU/EU_agreement_Chile_20050402.pdf" 1
+# python extract_pdf.py "./FTA_pdfs/EU/EU_agreement_Albania_2009.pdf" 1
 # python extract_pdf.py "./FTA_pdfs/EU/EU_agreement_Lebanon_20060704.pdf" 1
 
 
 
+python extract_pdf.py "./FTA_pdfs/KOR/RCEP.pdf" 0
