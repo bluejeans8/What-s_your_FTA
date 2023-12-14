@@ -118,7 +118,7 @@ def login_user(userid, password):
 
 # similar news search
 def similar_news_search(user, query=None, num=1) :
-    chroma_client = chromadb.PersistentClient(path=r"C:\Users\admin\Downloads\FTA_code\chroma")
+    chroma_client = chromadb.PersistentClient(path=r".\data\chroma")
     collection = chroma_client.get_collection(name='FTA_collection')
     if query is not None:
         input_n = user + query
@@ -140,10 +140,10 @@ def preprocess_text(text):
 def similar_agreement_search(user, query=None) :
     
     agreements = []
-    with open(r'C:\Users\admin\Downloads\FTA_code\joined_chunks.pkl', 'rb') as file:
+    with open(r'.\data\joined_chunks.pkl', 'rb') as file:
         agreements_5000 = pickle.load(file)
 
-    with open(r"C:\Users\admin\Downloads\FTA_code\agreements_bm25_5000.pkl", 'rb') as file :
+    with open(r".\data\agreements_bm25_5000.pkl", 'rb') as file :
         bm25 = pickle.load(file)
         if query is not None:
             input_a = user + query
