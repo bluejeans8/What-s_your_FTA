@@ -12,8 +12,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import json
 import os
+from dotenv import load_dotenv, find_dotenv
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+load_dotenv(find_dotenv())
+
 
 
 # Security

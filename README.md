@@ -8,5 +8,9 @@
 - **requirements.txt:** environment of Python 3.10 & required packages
 
 ## Data preprocessing
-## Retrieval augmneted generation
-## Web service
+
+
+
+
+## Run the application
+- `python -m streamlit ./Application/app.py` to run the app.

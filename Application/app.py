@@ -11,8 +11,9 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import openai
 import os
+from dotenv import load_dotenv, find_dotenv
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+load_dotenv(find_dotenv())
 
 
 st.title('Find Your FTA Contents')
