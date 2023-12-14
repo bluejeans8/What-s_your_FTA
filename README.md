@@ -18,4 +18,4 @@ To do so, we constructed FTA related dataset from the scratch. Also, we leverage
 Application/data/. <br/>
 
 ### Run the app
-- `python -m streamlit ./Application/app.py` to run the app.
+- `python -m streamlit run ./Application/app.py` to run the app.
