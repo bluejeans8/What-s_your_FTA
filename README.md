@@ -15,7 +15,7 @@ To do so, we constructed FTA related dataset from the scratch. Also, we leverage
 
 ### Prepare Dataset
 - Download news and agreements dataset from [HERE](https://drive.google.com/drive/u/0/folders/1xHb17qcSF0sevaFwKW5HLhkbvRcnpccg) and place it inside 
-Application/data/. <br/>
+Application/data/. Please unzip chroma.zip file before placing it inside the folder. <br/>
 
 ### Run the app
 - `python -m streamlit run ./Application/app.py` to run the app.
